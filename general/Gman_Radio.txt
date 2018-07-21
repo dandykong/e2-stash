@@ -1,0 +1,10 @@
+@name G-man Radio
+@inputs 
+@outputs 
+@persist 
+@trigger 
+
+# Something I made years ago, and the first two lines of code I ever wrote. This simple chip just plays the G-Man radio song on a loop. Nothing special.
+
+interval(42000)
+soundPlay(1,0,"music/radio1.mp3")
