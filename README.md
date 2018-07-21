@@ -1,2 +1,2 @@
-# e2-stash
-Expression 2 codes for Wiremod
+# Wiremod Expression 2 Stash
+A bunch of Wiremod E2 chip codes, freely available to the community.
