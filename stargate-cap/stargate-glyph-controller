@@ -1,0 +1,148 @@
+@name Stargate Glyph Controller
+@inputs SG:wirelink DHD:wirelink Panic_Address:string
+@outputs Raid_Mode Crack_Iris Jamming_Status:number
+@persist Stargate:entity DialHalt Halt JTE:entity
+@trigger 
+
+#[
+This chip adds several functions to stargates that can be activated by dialing
+two-glyph addresses on the DHD. Setup is simple, just wirelink to the gate
+and DHD.
+
+@P - Panic Address: Instantly opens a wormhole to the address specified in
+the "Panic Address" string input.
+
+@D - Diagnostic Mode: Planned.
+
+@I - Toggle Iris: Toggles any iris connected to the gate.
+
+@C - Crack Iris: When calling, opens the receiver's iris.
+
+@R - Raiding Mode: Reconfigures the gate for offensive use. This toggles
+an output suited for wire weapons, inverts all incoming wormholes, disables
+autoclose, and turns the event horizon red. Always check servers' PvP rules
+before using this!
+
+@J - Jam Gate: Locks down a target gate by flooding it with abort commands. Dial
+an address after dialing @J to select a target. Always check servers' PvP rules
+before using this!
+]#
+
+SDA=SG:stargateGetWireString("Dialing Address")
+CL=SG:stargateGetWire("Chevron Locked")
+Open=SG:stargateGetWire("Open")
+Inbound=SG:stargateGetWire("Inbound")
+
+function entity findStargateByAddress(Address:string){
+    LocalAddress=Address:sub(1,6)
+    findExcludeClass("stargate_iris_*")
+    findByClass("stargate_*")
+    Stargates = findToArray()
+    for (I=1, Stargates:count()){
+        Stargate = Stargates[I, entity]
+        if (Stargate:stargateAddress() == LocalAddress){
+            break
+        }
+    }
+    return Stargate
+}
+
+function string depound(Address:string){
+    AddressLengthMinusOne = Address:length() - 1
+    return Address:sub(1,AddressLengthMinusOne)
+}
+
+interval(100)
+
+if(SDA=="@P"){
+    SG:stargateDial(Panic_Address,2)
+}
+if(SDA=="@I"){
+    if(!Halt) {
+        SG:stargateIrisToggle()
+        Halt=1
+    }
+    DHD:stargateDHDPressButton("I")
+}
+
+if(SDA=="@C"){
+    if(Crack_Iris==1) {
+        if(!Halt) {
+            Crack_Iris=0
+            Halt=1
+        }
+    }
+    else {
+        if(!Halt) {
+            Crack_Iris=1
+            Halt=1
+        }
+    }
+    DHD:stargateDHDPressButton("C")
+}
+
+if(SDA=="@R"){
+    if(Raid_Mode==1) {
+        if(!Halt) {
+            Raid_Mode=0
+            SG:stargateSetWire("Event Horizon Color",vec(0,0,0))
+            SG:stargateSetWire("Disable Autoclose",0)
+            Halt=1
+        }
+    }
+    else {
+        if(!Halt) {
+            Raid_Mode=1
+            SG:stargateSetWire("Event Horizon Color",vec(255,0,0))
+            SG:stargateSetWire("Disable Autoclose",1)
+            Halt=1
+        }
+    }
+    DHD:stargateDHDPressButton("R")
+}
+
+if(SDA=="@J"){
+    if(Jamming_Status!= 0){
+        if(!Halt) {
+            Jamming_Status=0
+            Halt=1
+        }
+    }
+    else{
+        if(!Halt) {
+            Jamming_Status=1
+            Halt=1
+        }
+    }
+    DHD:stargateDHDPressButton("J")
+}
+
+if(SDA=="@"){
+    Halt=0
+}
+
+if(Open){
+    DialHalt=0
+}
+
+if(Crack_Iris==1 & CL){
+    TG = findStargateByAddress(SDA)
+    if (TG:stargateIrisActive()) {TG:stargateIrisToggle()}
+}
+
+if(Raid_Mode==1){
+    while(Inbound & !DialHalt) {
+        SDASansPound = depound(SDA)
+        SG:stargateClose()
+        SG:stargateDial(SDASansPound,2)
+        DialHalt=1
+    }
+}
+
+if(Jamming_Status==1 & CL){
+    JTE = findStargateByAddress(SDA)
+    Jamming_Status=2
+}
+if(Jamming_Status==2){
+    if(JTE:stargateActive()){JTE:stargateClose()}
+}
