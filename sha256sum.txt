@@ -1,0 +1,4 @@
+5bb98df3364c872c7c583e1d257ec9ad0cc5bbb2e79c49468ede150fdecf09d0  README.md
+059bdf2b52d766d67e7fbcdd9ad49938d86cbf3fb4e22754c3a42d116dedbf5e  general/Gman_Radio.txt
+c8a4cf1f6e2067d7450e7ac84a43359b409715100380ec74035796e6554769d7  stargate-cap/stargate-glyph-controller
+
