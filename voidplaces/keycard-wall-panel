@@ -1,0 +1,72 @@
+@name Wire VP Keycard Wall Panel
+@inputs Busy Lock Override Danger
+@outputs Open Allow Deny Tamper
+@persist Expected
+@strict
+
+@model models/pkblack/pb_wc_cardwallpanela.mdl
+
+UnlockSound = "pbvoidplaces/phys/pb_vp_keycard_unlock.wav"
+DenySound = "pbvoidplaces/phys/pb_vp_keycard_nope.wav"
+
+let PostCooldown = function() {
+    Allow=0
+    Deny=0
+    Tamper=0
+}
+
+let Cooldown = function(N:number) {
+    if(timerExists("cooldown")) {
+        timerAdjust("cooldown", N, 1)
+    }
+    else {
+        timer("cooldown", N, PostCooldown)
+    }
+}
+
+event chipUsed(Player:entity) {
+    if(!Busy & !Deny & !Tamper) {
+        if(Player == owner() | !Lock) {
+            soundPlay(1, 0, UnlockSound)
+            Open=!Open
+            Allow=1
+            Expected=1
+            Cooldown(3)
+        }
+        else {
+            soundPlay(1, 0, DenySound)
+            Deny=1
+            Cooldown(3)
+        }
+    }
+}
+
+event tick() {
+    if(Expected) {
+        if(!Busy & !Allow) {Expected=0}
+    }
+    
+    if(Busy) {
+        if(!Expected & !Override) {
+            Open=0
+            Tamper=1
+            Cooldown(1)
+            entity():setSkin(3)
+        }
+        else {
+            entity():setSkin(5)
+        }
+    }
+    elseif(Tamper) {
+        entity():setSkin(3)
+    }
+    elseif(Danger) {
+        entity():setSkin(4)
+    }
+    elseif(Open) {
+        entity():setSkin(2)
+    }
+    else {
+        entity():setSkin(1)
+    }
+}
